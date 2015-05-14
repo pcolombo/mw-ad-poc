@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" src="//cdn.livefyre.com/Livefyre.js"></script>
+    <style type="text/css">
+    .content-body-main p {
+        display: none;
+    }
+    </style>
+</head>
+
+<body>
+    <p>Injects a an ad tile after every nth item. (LF.adCount).<a href="https://github.com/pcolombo/mw-ad-poc" target="_blank">Please consult the README.</a></p>
+    
+    <div style="width: 90%; margin:auto;">
+        <div id="wall"></div>
+    </div>
+    
+    <script type="text/javascript">
+    var LFWall = LFWall || {};
+
+    LFWall.Collection;
+    LFWall.Wall;
+    LFWall.createAd;
+    LFWall.counter = 0;
+    LFWall.adInterval = 6;
+    LFWall.adCount = 1;
+
+    LFWall.adTemplate = {
+        body: "",
+        vis: 1,
+        attachments: [],
+        replies: [],
+        opines: []
+    };
+
+    LFWall.collectionConfig = {
+        network: 'client-solutions.fyre.co',
+        siteId: '357316',
+        articleId: 'custom-1430345082542'
+    };
+
+    LFWall.getAdTemplate = function() {
+        var bodyStr = "<div id='lf-mediawall-rectangle-"+LFWall.adCount+"' class='mediaWallAd'><script type='text/javascript'>LFWall.insertAd("+LFWall.adCount+")<\/script>&nbsp;</div>";
+        var obj = LFWall.adTemplate;
+            obj.body = bodyStr;
+        LFWall.adCount ++;
+        return obj;
+    }
+
+    LFWall.checkCounter = function(n) {
+        var check = (n % LFWall.adInterval) == 0;
+        //console.log('checkWall: '+check);
+        if (check == true) {
+            return true;
+        } else {
+            return false;
+        }
+    };
+
+    LFWall.insertAd = function(n) {
+        var el = document.getElementById('lf-mediawall-rectangle-'+n);
+        var adString = "<img src='http://placehold.it/320x250'>";
+        el.innerHTML += adString;
+    };
+
+    Livefyre.require(
+        ['streamhub-wall#3.5.0', 'streamhub-sdk#2.16.0'],
+        function(Wall, SDK) {
+
+            var self = this;
+            var LFWall = window.LFWall;
+
+            LFWall.Collection = new SDK.Collection(LFWall.collectionConfig);
+
+            LFWall.Wall = new Wall({
+                el: document.getElementById('wall'), 
+                minContentWidth: 320
+            });
+
+            LFWall.Wall._wallView.on('added', function(c){
+                //console.log(c.content);
+                //console.log('Added Item: '+LFWall.counter);
+                LFWall.counter++;
+                if (LFWall.checkCounter(LFWall.counter) === true) {
+                    injectAdTemplate();
+                }
+            });
+
+            self.injectAdTemplate = function() {
+                var content = new SDK.Content(LFWall.getAdTemplate());
+                //console.log(content)
+                LFWall.Wall._wallView.add(content, LFWall.counter); // yes
+                //LFWall.Wall._wallView._insert(content, LFWall.counter); // no
+                //LFWall.Wall._wallView.write(content); // no
+            }
+            
+            LFWall.Collection.pipe(LFWall.Wall);
+
+        }
+    );
+    </script>
+</body>
+
+</html>

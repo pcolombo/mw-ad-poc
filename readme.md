@@ -30,6 +30,16 @@ Within the Media Wall, the following containers should be added for the customer
 
 ## Files
 
+###injector.html
+
+[View](http://pcolombo.github.io/mw-ad-poc/injector.html) | [Source](single.html)
+
+Injects a placehlder for an ad unit at every nth item. (Configurable via LFWall.adInterval).
+Additional logic can be added to LFWall.getAdTemplate() as desired.
+
+
+
+
 ###single.html
 
 [View](http://pcolombo.github.io/mw-ad-poc/single.html) | [Source](single.html)
