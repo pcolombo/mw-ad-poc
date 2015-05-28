@@ -13,101 +13,172 @@
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script type="text/javascript" src="//cdn.livefyre.com/Livefyre.js"></script>
+    <!-- Matche RAMS version of jquery -->
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+
     <style type="text/css">
-    .content-body-main p {
-        display: none;
-    }
+        /*  Hide body text */
+        .content-body-main p {
+            display: none;
+        }
+
+        /* Ad container in modal 
+         * TODO: Positioning
+        */
+        .modal-ad-unit {
+            display: inline-block;
+            width: 320px;
+            height: 200px;
+            background-image: url('http://placehold.it/320x250');
+        }    
+
+        /* Move over content in modal */
+        .content-attachments-focused {
+            text-align: left !important;
+            margin-left: 10% !important;
+        }
+
     </style>
 </head>
 
 <body>
-    <p>Injects a an ad tile after every nth item. (LF.adCount).<a href="https://github.com/pcolombo/mw-ad-poc" target="_blank">Please consult the README.</a></p>
+    <p>Injects a an ad tile after every nth item. (LF.adCount). <a href="https://github.com/pcolombo/mw-ad-poc" target="_blank">Please consult the README.</a></p>
     
     <div style="width: 90%; margin:auto;">
         <div id="wall"></div>
     </div>
     
     <script type="text/javascript">
-    var LFWall = LFWall || {};
+    var AdWall = AdWall || {};
 
-    LFWall.Collection;
-    LFWall.Wall;
-    LFWall.createAd;
-    LFWall.counter = 0;
-    LFWall.adInterval = 6;
-    LFWall.adCount = 1;
+        AdWall.Collection;          // Container for Collection instance
+        AdWall.Wall;                // Container for Wall instance
+        AdWall.counter = 0;         // Number of items added to the wall
+        AdWall.adInterval = 4;      // Number of items to inject an ad after
+        AdWall.adCount = 1;         // Current count of ad units 
+        AdWall.loadMoreCounter = 0; // Number of times Load More is clicked
 
-    LFWall.adTemplate = {
-        body: "",
-        vis: 1,
-        attachments: [],
-        replies: [],
-        opines: []
-    };
+        // Blank SDK Content Template
+        AdWall.adTemplate = {
+            body: "",
+            vis: 1,
+            attachments: [],
+            replies: [],
+            opines: []
+        };
 
-    LFWall.collectionConfig = {
-        network: 'client-solutions.fyre.co',
-        siteId: '357316',
-        articleId: 'custom-1430345082542'
-    };
+        // Collection Config
+        AdWall.collectionConfig = {
+            network: 'client-solutions.fyre.co',
+            siteId: '357316',
+            articleId: 'custom-1430345082542'
+        };
 
-    LFWall.getAdTemplate = function() {
-        var bodyStr = "<div id='lf-mediawall-rectangle-"+LFWall.adCount+"' class='mediaWallAd'><script type='text/javascript'>LFWall.insertAd("+LFWall.adCount+")<\/script>&nbsp;</div>";
-        var obj = LFWall.adTemplate;
-            obj.body = bodyStr;
-        LFWall.adCount ++;
-        return obj;
-    }
-
-    LFWall.checkCounter = function(n) {
-        var check = (n % LFWall.adInterval) == 0;
-        //console.log('checkWall: '+check);
-        if (check == true) {
-            return true;
-        } else {
-            return false;
+        // Builds and returns html for ad container
+        AdWall.getAdTemplate = function() {
+            var bodyStr = "<div id='lf-mediawall-rectangle-"+AdWall.adCount+"' class='mediaWallAd'><script type='text/javascript'>AdWall.insertAd("+AdWall.adCount+")<\/script>&nbsp;</div>";
+            var obj = AdWall.adTemplate;
+                obj.body = bodyStr;
+            AdWall.adCount ++;
+            return obj;
         }
-    };
 
-    LFWall.insertAd = function(n) {
-        var el = document.getElementById('lf-mediawall-rectangle-'+n);
-        var adString = "<img src='http://placehold.it/320x250'>";
-        el.innerHTML += adString;
-    };
+        // Checks to see an ad should be injected
+        AdWall.checkCounter = function(n) {
+            var check = (n % AdWall.adInterval) == 0;
+            if (check == true) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        // Inserts the ad into a specific placeholder
+        AdWall.insertAd = function(n) {
+            var el = document.getElementById('lf-mediawall-rectangle-'+n);
+            var adString = "<img src='http://placehold.it/320x250'>";
+            el.innerHTML += adString;
+        };
+
+        // Inserts an ad into the modal overlay
+        AdWall.injectModalAdContainer = function(){
+            var container = document.createElement('div');
+                container.className = 'modal-ad-unit';
+            document.getElementsByClassName('content-attachments-gallery')[0].appendChild(container);   
+            //document.getElementsByClassName('content-attachments-focused')[0].appendChild(container);   
+            console.log('injectModalAdContainer');
+        };
+    
+        // Destroys the ad in the modal overlay
+        AdWall.destroyModalAdContainer = function() {
+            // TO DO: Target and destroy proper dom node
+        };
+
+        // User has clicked on an item
+        AdWall.onContentClick = function(e) {
+            AdWall.injectModalAdContainer();
+            AdWall.track(e);
+        };
+
+        // User has closed modal
+        AdWall.onModalCloseClick = function(e) {
+            AdWall.destroyModalAdContainer();
+        };
+
+        // Load more button clicked
+        AdWall.onLoadMoreClick = function(e) {
+            AdWall.loadMoreCounter ++;
+            AdWall.track(loadMoreCounter);
+        };
+
+        AdWall.track = function(e) {
+            /* TO DO: 
+             * - Format for GA and add _trackEvent
+             * - Conditionals for different events
+            */
+            console.log('track in ga: '+e.toString());
+        };
+
+    
+        // Add handlers
+        $('#wall').on('click', '.content-attachment-frame', AdWall.onContentClick);
+        $('body').on('mouseup', '.hub-list-more', AdWall.onLoadMoreClick);
+        $('body').on('mouseup', '.hub-modal-close', AdWall.onModalCloseClick);
+
 
     Livefyre.require(
         ['streamhub-wall#3.5.0', 'streamhub-sdk#2.16.0'],
         function(Wall, SDK) {
-
+            
             var self = this;
-            var LFWall = window.LFWall;
+            
+            var AdWall = window.AdWall;
 
-            LFWall.Collection = new SDK.Collection(LFWall.collectionConfig);
+            AdWall.Collection = new SDK.Collection(AdWall.collectionConfig);
 
-            LFWall.Wall = new Wall({
+            AdWall.Wall = new Wall({
                 el: document.getElementById('wall'), 
                 minContentWidth: 320
-            });
+            }); 
 
-            LFWall.Wall._wallView.on('added', function(c){
-                //console.log(c.content);
-                //console.log('Added Item: '+LFWall.counter);
-                LFWall.counter++;
-                if (LFWall.checkCounter(LFWall.counter) === true) {
-                    injectAdTemplate();
+
+            AdWall.Wall._wallView.on('added', function(c){
+                if (c.content.source != undefined) {
+                    AdWall.counter++;
+                    if (AdWall.checkCounter(AdWall.counter) === true) {
+                        injectAdTemplate();
+                    }
                 }
             });
-
+        
             self.injectAdTemplate = function() {
-                var content = new SDK.Content(LFWall.getAdTemplate());
-                //console.log(content)
-                LFWall.Wall._wallView.add(content, LFWall.counter); // yes
-                //LFWall.Wall._wallView._insert(content, LFWall.counter); // no
-                //LFWall.Wall._wallView.write(content); // no
+                var content = new SDK.Content(AdWall.getAdTemplate());
+                AdWall.Wall._wallView.add(content, AdWall.counter); // yes
+                //AdWall.Wall._wallView._insert(content, AdWall.counter); // no
+                //AdWall.Wall._wallView.write(content); // no
             }
             
-            LFWall.Collection.pipe(LFWall.Wall);
-
+            AdWall.Collection.pipe(AdWall.Wall);
         }
     );
     </script>
