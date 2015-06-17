@@ -29,8 +29,7 @@
             display: inline-block;
             width: 320px;
             height: 250px;
-            background-image: url('http://placehold.it/320x250');
-
+            background-image: url('http://placehold.it/320x250/ffffff');
             /* placeholder positioning */
             position: fixed !important;
             left: 66%;
@@ -112,9 +111,10 @@
         };
 
         // Inserts the ad into a specific placeholder
+        // To Do: Move this to 'added' event handler
         AdWall.insertAd = function(n) {
             var el = document.getElementById('lf-mediawall-rectangle-'+n);
-            var adString = "<img src='http://placehold.it/320x250'>";
+            var adString = "<img src='http://placehold.it/320x250/'>";
             el.innerHTML += adString;
         };
 
@@ -155,16 +155,22 @@
         AdWall.onPrevClick = function(e) {
             if(AdWall.currentFocus > 0) {
                 AdWall.currentFocus --;
-                AdWall.Wall._wallView.modal._modalSubView.focus(AdWall.Wall._wallView.views[AdWall.currentFocus].content.attachments[0]);
+                if(AdWall.Wall._wallView.views[AdWall.currentFocus].content.source != undefined) {
+                    AdWall.Wall._wallView.modal._modalSubView.focus(AdWall.Wall._wallView.views[AdWall.currentFocus].content.attachments[0]);
+                }
             }
             // TO DO: track
         };
 
         // Next button clicked
         AdWall.onNextClick = function(e) {
-            if(AdWall.currentFocus < AdWall.Wall._wallView.views.length) {
+            if(AdWall.currentFocus < (AdWall.Wall._wallView.views.length -1) ) {
                 AdWall.currentFocus ++;
-                AdWall.Wall._wallView.modal._modalSubView.focus(AdWall.Wall._wallView.views[AdWall.currentFocus].content.attachments[0]);
+                if(AdWall.Wall._wallView.views[AdWall.currentFocus].content.source != undefined) {
+                    AdWall.Wall._wallView.modal._modalSubView.focus(AdWall.Wall._wallView.views[AdWall.currentFocus].content.attachments[0]);
+                } else {
+                    AdWall.onNextClick();
+                }
             }
             // TO DO: track
         };
@@ -180,12 +186,12 @@
         AdWall.getItemIndex = function(c) {
             var contentList = AdWall.Wall._wallView.views;
             var currentContent = AdWall.Wall._wallView.modal._modalSubView.content.id;
-            for(i=0; i<contentList.length; i++) {
-                console.log('current: '+currentContent + ' list: '+contentList[i].content.id);
+            for(i=0; i<(contentList.length); i++) {
+                //console.log('current: '+currentContent + ' list: '+contentList[i].content.id);
                 if (currentContent == contentList[i].content.id) { 
                     AdWall.currentFocus = i;
                     console.log('match: '+currentContent);
-                    break;
+                   // break;
                 }
             }
         };
@@ -225,6 +231,7 @@
                         injectAdTemplate();
                     }
                 }
+                console.log('Added: ' + AdWall.Wall._wallView.views.length + ' | ' + c.content.source);
             });
         
             self.injectAdTemplate = function() {
