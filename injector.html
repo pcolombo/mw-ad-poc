@@ -23,18 +23,18 @@
         }
 
         /* Ad container in modal 
-         * TODO: Positioning
+         * TODO: Better positioning
         */
         .modal-ad-unit {
             display: inline-block;
             width: 320px;
-            height: 200px;
+            height: 250px;
             background-image: url('http://placehold.it/320x250');
 
             /* placeholder positioning */
-            position: absolute !important;
-            left: 1030px;
-            top: 157px;
+            position: fixed !important;
+            left: 66%;
+            top: 20%;
         }    
 
         /* Move over content in modal */
@@ -43,11 +43,23 @@
             margin-left: 10% !important;
         }
 
+        .content-attachments-gallery-prev,
+        .content-attachments-gallery-next {
+            display: block !important;
+        }
+
     </style>
 </head>
 
 <body>
-    <p>Injects a an ad tile after every nth item. (LF.adCount). <a href="https://github.com/pcolombo/mw-ad-poc" target="_blank">Please consult the README.</a></p>
+    <p>
+    <ul>
+        <li>Injects a an ad tile after every nth item. (Configurable via AdWall.adInterval.)</li> 
+        <li>Injects a an ad in the modal overlay.</li>
+        <li>User can navigate through wall items in the modal overlay using next/back buttons.</li> 
+    </ul>
+
+    <a href="https://github.com/pcolombo/mw-ad-poc" target="_blank">Please consult the README.</a></p>
     
     <div style="width: 90%; margin:auto;">
         <div id="wall"></div>
@@ -59,9 +71,10 @@
         AdWall.Collection;          // Container for Collection instance
         AdWall.Wall;                // Container for Wall instance
         AdWall.counter = 0;         // Number of items added to the wall
-        AdWall.adInterval = 4;      // Number of items to inject an ad after
+        AdWall.adInterval = 7;      // Number of items to inject an ad after
         AdWall.adCount = 1;         // Current count of ad units 
         AdWall.loadMoreCounter = 0; // Number of times Load More is clicked
+        AdWall.currentFocus = 0;    // Index of current item in modal
 
         // Blank SDK Content Template
         AdWall.adTemplate = {
@@ -121,8 +134,10 @@
 
         // User has clicked on an item
         AdWall.onContentClick = function(e) {
+            console.dir(e);
             AdWall.injectModalAdContainer();
-            AdWall.track(e);
+            AdWall.getItemIndex();
+            // TO Do: AdWall.track(e);
         };
 
         // User has closed modal
@@ -136,6 +151,24 @@
             AdWall.track(loadMoreCounter);
         };
 
+        // Prev button clicked
+        AdWall.onPrevClick = function(e) {
+            if(AdWall.currentFocus > 0) {
+                AdWall.currentFocus --;
+                AdWall.Wall._wallView.modal._modalSubView.focus(AdWall.Wall._wallView.views[AdWall.currentFocus].content.attachments[0]);
+            }
+            // TO DO: track
+        };
+
+        // Next button clicked
+        AdWall.onNextClick = function(e) {
+            if(AdWall.currentFocus < AdWall.Wall._wallView.views.length) {
+                AdWall.currentFocus ++;
+                AdWall.Wall._wallView.modal._modalSubView.focus(AdWall.Wall._wallView.views[AdWall.currentFocus].content.attachments[0]);
+            }
+            // TO DO: track
+        };
+
         AdWall.track = function(e) {
             /* TO DO: 
              * - Format for GA and add _trackEvent
@@ -144,9 +177,26 @@
             console.log('track in ga: '+e.toString());
         };
 
+        AdWall.getItemIndex = function(c) {
+            var contentList = AdWall.Wall._wallView.views;
+            var currentContent = AdWall.Wall._wallView.modal._modalSubView.content.id;
+            for(i=0; i<contentList.length; i++) {
+                console.log('current: '+currentContent + ' list: '+contentList[i].content.id);
+                if (currentContent == contentList[i].content.id) { 
+                    AdWall.currentFocus = i;
+                    console.log('match: '+currentContent);
+                    break;
+                }
+            }
+        };
+
+
     
         // Add handlers
         $('#wall').on('click', '.content-attachment-frame', AdWall.onContentClick);
+        $('body').on('mouseup', '.content-attachments-gallery-prev', AdWall.onPrevClick);
+        $('body').on('mouseup', '.content-attachments-gallery-next', AdWall.onNextClick);
+        // TO DO: Add keypress handlers for next/back
         $('body').on('mouseup', '.hub-list-more', AdWall.onLoadMoreClick);
         $('body').on('mouseup', '.hub-modal-close', AdWall.onModalCloseClick);
 
@@ -163,13 +213,14 @@
 
             AdWall.Wall = new Wall({
                 el: document.getElementById('wall'), 
-                minContentWidth: 320
+                minContentWidth: 320    
             }); 
 
 
             AdWall.Wall._wallView.on('added', function(c){
                 if (c.content.source != undefined) {
                     AdWall.counter++;
+                    window.foo = c.content;
                     if (AdWall.checkCounter(AdWall.counter) === true) {
                         injectAdTemplate();
                     }
